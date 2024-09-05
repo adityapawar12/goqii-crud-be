@@ -1,4 +1,5 @@
 const pool = require("../../../config/db");
+const moment = require("moment-timezone");
 
 module.exports.getUsers = async (req, res) => {
   try {
@@ -42,6 +43,7 @@ module.exports.getUser = async (req, res) => {
 module.exports.createUser = async (req, res) => {
   try {
     const { name, email, phone, password, dob } = req.body;
+    const localDate = moment.tz(dob, "Asia/Kolkata").format("yyyy-MM-DD");
 
     const userEmailExists = await pool.query(
       "SELECT id FROM goqii_users WHERE email = $1",
@@ -77,7 +79,7 @@ module.exports.createUser = async (req, res) => {
 
     await pool.query(
       "INSERT INTO goqii_users (name, email, phone, password, dob) VALUES ($1, $2, $3, $4, $5)",
-      [name, email, phone, password, dob]
+      [name, email, phone, password, localDate]
     );
 
     return res.status(201).json({
@@ -100,6 +102,7 @@ module.exports.updateUser = async (req, res) => {
 
     if (user.rows.length > 0) {
       const { name, email, phone, password, dob } = req.body;
+      const localDate = moment.tz(dob, "Asia/Kolkata").format("yyyy-MM-DD");
 
       const userEmailExists = await pool.query(
         "SELECT id FROM goqii_users WHERE email = $1 AND id <> $2",
@@ -134,8 +137,8 @@ module.exports.updateUser = async (req, res) => {
       }
 
       await pool.query(
-        "UPDATE goqii_users SET name = $1, email = $2, phone = $3, password = $4, dob = $5, updated_at = $6 WHERE id = $7",
-        [name, email, phone, password, dob, new Date(), Number(id)]
+        "UPDATE goqii_users SET name = $1, email = $2, phone = $3, dob = $4, updated_at = $5 WHERE id = $6",
+        [name, email, phone, localDate, new Date(), Number(id)]
       );
 
       return res.status(201).json({
